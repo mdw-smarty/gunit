@@ -2,6 +2,7 @@ package gunit
 
 import (
 	"fmt"
+	"log"
 	"reflect"
 	"runtime/debug"
 	"strings"
@@ -72,7 +73,7 @@ func Run(outerFixture any, t *testing.T, options ...Option) {
 		t.Parallel()
 	}
 
-	setInnerFixture(fixtureValue, t)
+	setInnerFixture(fixtureValue, t, config)
 
 	setup, hasSetup := outerFixture.(setupSuite)
 	if hasSetup {
@@ -99,13 +100,18 @@ func Run(outerFixture any, t *testing.T, options ...Option) {
 	}
 }
 
-func setInnerFixture(fixtureValue reflect.Value, t *testing.T) {
+func setInnerFixture(fixtureValue reflect.Value, t *testing.T, config *config) {
 	defer func() {
 		if recover() != nil {
 			panic("must embed a *gunit.Fixture on the provided fixture")
 		}
 	}()
-	fixtureValue.Elem().FieldByName("Fixture").Set(reflect.ValueOf(&Fixture{TestingT: t}))
+	fixture := &Fixture{
+		config:   config,
+		TestingT: t,
+		Logger:   log.New(t.Output(), config.logPrefix, config.logFlags),
+	}
+	fixtureValue.Elem().FieldByName("Fixture").Set(reflect.ValueOf(fixture))
 }
 
 type testCase struct {
@@ -144,7 +150,7 @@ func (this testCase) runTest(t *testing.T) {
 	if this.config.freshFixture {
 		fixtureValue = reflect.New(this.fixtureType.Elem())
 	}
-	setInnerFixture(fixtureValue, t)
+	setInnerFixture(fixtureValue, t, this.config)
 
 	setup, hasSetup := fixtureValue.Interface().(setupTest)
 	if hasSetup {

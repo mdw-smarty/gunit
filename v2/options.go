@@ -1,9 +1,13 @@
 package gunit
 
+import "log"
+
 type config struct {
 	freshFixture    bool
 	parallelFixture bool
 	parallelTests   bool
+	logPrefix       string
+	logFlags        int
 }
 
 // Option is a function that modifies a config.
@@ -95,6 +99,18 @@ func (singleton) IntegrationTests() Option {
 	}
 }
 
+// LogSettings allows the caller to customize the
+// fixture's embedded logger, which could be passed
+// to production code, thereby scoping all log output
+// to the currently running test case.
+func (singleton) LogSettings(prefix string, flags int) Option {
+	return func(c *config) {
+		c.logPrefix = prefix
+		c.logFlags = flags
+	}
+}
+
 var defaultOptions = []Option{
 	Options.UnitTests(),
+	Options.LogSettings("", log.Ldate|log.Lmicroseconds|log.Lshortfile),
 }

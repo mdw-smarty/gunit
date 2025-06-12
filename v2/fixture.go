@@ -1,18 +1,19 @@
 package gunit
 
 import (
+	"log"
 	"runtime/debug"
 	"testing"
 )
 
-type Fixture struct{ TestingT }
+type Fixture struct {
+	config *config
+	TestingT
+	Logger
+}
 
-// Write implements io.Writer, which is convenient when using a fixture
-// as a log target.
-func (this *Fixture) Write(p []byte) (int, error) {
-	this.Helper()
-	this.Log(string(p))
-	return len(p), nil
+type Logger interface {
+	Printf(string, ...any)
 }
 
 // So is a convenience method for reporting assertion failure messages
@@ -27,7 +28,11 @@ func (this *Fixture) So(actual any, assert Assertion, expected ...any) {
 func (this *Fixture) Run(name string, test func(fixture *Fixture)) {
 	this.TestingT.(*testing.T).Run(name, func(t *testing.T) {
 		t.Helper()
-		fixture := &Fixture{t}
+		fixture := &Fixture{
+			config:   this.config,
+			TestingT: t,
+			Logger:   log.New(t.Output(), this.config.logPrefix, this.config.logFlags),
+		}
 		defer func() {
 			if r := recover(); r != nil {
 				fixture.Fail()

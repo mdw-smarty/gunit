@@ -1,13 +1,18 @@
 package examples
 
+type Logger interface {
+	Printf(string, ...any)
+}
 type Game struct {
-	rolls [maxThrowsPerGame]int
-	roll  int
-	score int
+	logger Logger
+	rolls  [maxThrowsPerGame]int
+	roll   int
+	score  int
 }
 
-func NewGame() *Game {
-	return new(Game)
+func NewGame(logger Logger) *Game {
+	logger.Printf("This output is scoped to the currently running test!")
+	return &Game{logger: logger}
 }
 
 func (this *Game) RecordRoll(pins int) {

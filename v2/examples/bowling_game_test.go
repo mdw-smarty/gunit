@@ -18,7 +18,7 @@ type BowlingGameScoringFixture struct {
 }
 
 func (this *BowlingGameScoringFixture) Setup() {
-	this.game = NewGame()
+	this.game = NewGame(this.Logger)
 }
 
 func (this *BowlingGameScoringFixture) TestGutterGame() {
@@ -75,7 +75,7 @@ func (this *BowlingGameScoringFixture) TestTable() {
 	}
 	for _, sub := range subTests {
 		this.Run(sub.name, func(fixture *gunit.Fixture) {
-			game := NewGame()
+			game := NewGame(fixture.Logger)
 			for _, roll := range sub.rolls {
 				game.RecordRoll(roll)
 			}
